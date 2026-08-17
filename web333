@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#f4f0e8"/>
+<link rel="manifest" href="manifest.json"/>
+<title>Intellectual OS</title>
+<style>
+:root{--bg:#f6f3ed;--paper:#fffdf8;--ink:#20201d;--muted:#77736b;--line:#ded9cf;--accent:#7b6752;--soft:#eee8de;--green:#637565;--red:#986c62}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 12px;color:var(--ink)}button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}button.danger{border-color:var(--red);color:var(--red)}
+
+/* 顶部导航 */
+.topnav{background:var(--paper);border-bottom:1px solid var(--line);padding:10px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20;flex-wrap:wrap}
+.topnav .brand{font-size:20px;font-weight:700;letter-spacing:-.03em;margin-right:20px}
+.topnav button{border:none;background:transparent;padding:8px 16px;border-radius:30px;font-weight:500;color:var(--muted);font-size:15px}
+.topnav button.active{background:var(--ink);color:#fff}
+.topnav .right{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.topnav .right .week-indicator{display:inline-flex;align-items:center;gap:8px}
+
+main{max-width:1300px;margin:0 auto;padding:24px 28px 60px}
+.panel{display:none}.panel.active{display:block}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:18px 20px;margin-bottom:18px}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{padding:11px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0;padding-top:0}
+.track{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.muted{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;margin:2px 3px 2px 0;background:#faf7f1}
+.tag-theory{background:#eee7de}.tag-industry{background:#e8eee8}.tag-invest{background:#ebe9f0}.tag-signal{background:#f1ece5}.tag-writing{background:#ece4df}
+.progress{height:6px;background:#e6e1d8;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--green)}
+.question{font-size:19px;line-height:1.3;letter-spacing:-.025em;margin:4px 0 10px}
+.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:10px;color:var(--muted)}
+.kpi{font-size:26px;font-weight:700;letter-spacing:-.04em}
+.notice{padding:11px 13px;border-left:3px solid var(--accent);background:var(--soft);border-radius:7px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.day{min-height:170px;background:var(--paper);border-right:1px solid var(--line);padding:10px}.day:last-child{border-right:0}
+.dayhead{font-size:11px;color:var(--muted);margin-bottom:8px}
+.block{padding:8px;border-radius:9px;background:var(--soft);margin:6px 0;font-size:11px;cursor:pointer;display:flex;gap:6px;align-items:flex-start}
+.block:hover{filter:brightness(0.96)}
+.block.fixed{background:#e4dfd5}
+.block.task{background:#eee7db}
+.block.optional{background:#f5f1e9;color:var(--muted);border:1px dashed var(--line)}
+.block .chk{flex:0 0 auto;cursor:pointer;user-select:none}
+.block.task.done .ttl{text-decoration:line-through;color:var(--muted)}
+
+.form{display:grid;gap:10px}
+.form input,.form textarea,.form select{width:100%;border:1px solid var(--line);border-radius:9px;background:#fffefb;padding:10px}
+.form textarea{min-height:110px;resize:vertical}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(32,32,29,.42);display:flex;align-items:center;justify-content:center;z-index:80;padding:20px}
+.modal-card{background:var(--paper);border-radius:16px;padding:22px;max-width:460px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+.modal-card .form label{display:block;margin-bottom:2px;font-size:12px}
+
+@media(max-width:900px){.calendar{grid-template-columns:1fr}.day{border-right:0;border-bottom:1px solid var(--line);min-height:auto}.topnav{flex-wrap:wrap}.topnav .right{margin-left:0;width:100%;justify-content:flex-end}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">Intellectual OS</span>
+  <button class="active" data-panel="calendar">Calendar</button>
+  <button data-panel="work">Work</button>
+  <span class="right">
+    <span class="week-indicator">
+      <button id="prevWeekTop">←</button>
+      <span id="topWeekDisplay">Week 1</span>
+      <button id="nextWeekTop">→</button>
+    </span>
+    <span id="saveStatus">Auto-saved</span>
+  </span>
+</nav>
+
+<main>
+  <div id="panelCalendar" class="panel active"></div>
+  <div id="panelWork" class="panel"></div>
+</main>
+
+<div id="modalRoot"></div>
+
+<script>
+// ================================================================
+// DATA (完全复制自原版)
+// ================================================================
+const WEEKS = [
+  ["What does it mean to “have” knowledge?", "Fromm", "Fromm: Learning / Remembering / Reading / Having Knowledge and Knowing"],
+  ["Does AI make us better at knowing—or just better at having answers?", "Fromm + sociology of knowledge", "Fromm + Harry Collins"],
+  ["What happens when the process of learning becomes optional?", "Fromm + contemporary research", "Fromm + GenAI knowledge behavior"],
+  ["When does a technology become part of the social world rather than just a tool?", "STS + Goffman", "Pinch & Bijker + selected Goffman"],
+  ["Who decides what an AI system gets to see, remember, classify, and ignore?", "STS", "Bowker & Star + algorithm/classification research"],
+  ["What changes when AI moves from a product we use to infrastructure we depend on?", "STS + sociology of AI", "Bowker & Star + Davis & Sloane"],
+  ["When AI does the work, what part of the job remains human?", "Arendt + work research", "The Human Condition + AI/work research"],
+  ["Why do we keep optimizing away the things that make work meaningful?", "Arendt", "The Human Condition + contemporary work organization research"],
+  ["If intelligence becomes cheap, what becomes expensive?", "Bourdieu + industry", "Distinction + capital/scarcity/value-capture research"],
+  ["Does AI democratize expertise—or change who gets to count as an expert?", "Bourdieu + Collins", "Distinction + sociology of knowledge/expertise"],
+  ["Why do some AI changes feel personal when they are actually structural?", "Mills", "The Sociological Imagination + contemporary sociology"],
+  ["When does AI stop changing what we do and start changing how society is organized?", "Mills + synthesis", "Baert et al. + review of prior weeks"]
+];
+
+const TRACKS = ["THEORY", "TECHNOLOGY & INDUSTRY", "INVESTMENT", "SIGNAL / NEWS", "WRITING"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const SOURCES = [
+  ["Harry Collins — Why artificial intelligence needs sociology of knowledge", "https://link.springer.com/article/10.1007/s00146-024-01954-8", "Week 2"],
+  ["Bowker & Star — Sorting Things Out", "https://mitpress.mit.edu/9780262024617/sorting-things-out/", "Week 5"],
+  ["Davis & Sloane — AI's Sociological Era", "https://doi.org/10.1177/08944393251394690", "Week 6"],
+  ["Baert et al. — Dialogues Towards Sociologies of Generative AI", "https://doi.org/10.1177/08944393251370354", "Week 12"],
+  ["Noller — Extended human agency", "https://www.nature.com/articles/s41599-024-03849-x", "Week 4"],
+  ["Frenkel — AI and the democratization of work organisation", "https://doi.org/10.1111/soc4.70212", "Week 7/8"]
+];
+
+const seedBooks = [
+  { id: "fromm", title: "To Have or To Be?", author: "Erich Fromm", type: "Book", track: "THEORY", status: "In progress", week: 1,
+    why: "Build the conceptual foundation for having/being, knowing, activity and modern life.",
+    url: "https://www.bloomsbury.com/us/to-have-or-to-be-9781780936802/", notes: "Current foundation. Finish before starting the theorist sequence." },
+  { id: "sorting", title: "Sorting Things Out", author: "Geoffrey C. Bowker & Susan Leigh Star", type: "Book", track: "THEORY",
+    status: "Planned", week: 5, why: "Understand classification, standards and infrastructure.",
+    url: "https://mitpress.mit.edu/9780262024617/sorting-things-out/", notes: "Selected chapters only." },
+  { id: "humancondition", title: "The Human Condition", author: "Hannah Arendt", type: "Book", track: "THEORY", status: "Planned",
+    week: 7, why: "Labor, work, action and the organization of human activity.",
+    url: "https://press.uchicago.edu/ucp/books/book/chicago/H/bo29137972.html", notes: "Selected chapters." },
+  { id: "distinction", title: "Distinction", author: "Pierre Bourdieu", type: "Book", track: "THEORY", status: "Planned",
+    week: 9, why: "Capital, distinction, social space and fields.",
+    url: "https://www.routledge.com/Distinction-A-Social-Critique-of-the-Judgement-of-Taste/Bourdieu/p/book/9780415567886",
+    notes: "Selected chapters." }
+];
+
+const seedTasks = [
+  { id: "t1", title: "Fromm — Part I: Learning / Remembering / Reading / Knowing", track: "THEORY", week: 1, mins: 150,
+    done: false, priority: 5, day: 0, start: "19:30", bookId: "fromm" },
+  { id: "t2", title: "Fromm reflection: having knowledge vs knowing", track: "THEORY", week: 1, mins: 60, done: false,
+    priority: 5, day: 3, start: "19:30", bookId: "fromm" },
+  { id: "t3", title: "Technology & Industry: AI infrastructure signal scan", track: "TECHNOLOGY & INDUSTRY", week: 1,
+    mins: 45, done: false, priority: 3, day: 1, start: "19:30", bookId: null },
+  { id: "t4", title: "Sunday blog research + thesis", track: "WRITING", week: 1, mins: 90, done: false, priority: 5,
+    day: 6, start: "14:00", bookId: null },
+  { id: "t5", title: "Sunday blog draft", track: "WRITING", week: 1, mins: 150, done: false, priority: 5, day: 6,
+    start: "15:45", bookId: null }
+];
+
+const seedAvailable = [{ id: "a1", week: 1, day: 5, start: "13:00", end: "14:00" }];
+
+// ================================================================
+// STATE
+// ================================================================
+let state = JSON.parse(localStorage.getItem("ios_state") || "null") || {
+  page: "calendar",
+  week: 1,
+  books: seedBooks,
+  tasks: seedTasks,
+  reflections: [],
+  available: seedAvailable,
+  fixed: [
+    { id: "f1", day: 4, start: "19:30", end: "22:30", title: "Protected time" },
+    { id: "f2", day: 5, start: "12:00", end: "13:30", title: "Lunch / personal time" },
+    { id: "f3", day: 6, start: "12:00", end: "13:30", title: "Lunch / cooking" }
+  ],
+  writing: { 1: { thesis: "", draft: "" } },
+  airesearch: [],
+  researchHistory: []
+};
+
+// migration
+state.available = (state.available || []).map(a => ({ ...a, week: a.week == null ? state.week : a.week }));
+state.airesearch = state.airesearch || [];
+state.researchHistory = state.researchHistory || [];
+state.fixed = (state.fixed || []).map(f => ({
+  id: f.id || ("f" + Math.random().toString(36).slice(2)),
+  day: f.day, start: f.start, end: f.end, title: f.title || "Protected time"
+}));
+state.tasks.forEach(t => {
+  if (t.day === undefined) t.day = null;
+  if (!t.start) t.start = "19:30";
+  if (t.bookId === undefined) t.bookId = null;
+});
+if (state.page !== "calendar" && state.page !== "work") state.page = "calendar";
+
+let lastAIResult = null;
+let replanNotice = null;
+let saveTimer = null;
+
+// ================================================================
+// UTILITY
+// ================================================================
+function save() {
+  localStorage.setItem("ios_state", JSON.stringify(state));
+  document.getElementById('saveStatus').textContent = 'Auto-saved ' + new Date().toLocaleTimeString();
+}
+
+function esc(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function toMin(t) { let p = (t || "00:00").split(":").map(Number); return p[0]*60 + p[1]; }
+function toTime(m) { m = ((m % 1440) + 1440) % 1440; let h = Math.floor(m/60), mm = m%60; return String(h).padStart(2,"0") + ":" + String(mm).padStart(2,"0"); }
+
+function tag(track) {
+  let cls = track == "THEORY" ? "theory" : track == "TECHNOLOGY & INDUSTRY" ? "industry" : track == "INVESTMENT" ? "invest" : track == "SIGNAL / NEWS" ? "signal" : "writing";
+  return `<span class="pill tag-${cls}">${esc(track)}</span>`;
+}
+
+function weekData() {
+  let q = WEEKS[state.week - 1];
+  return { q: q[0], lens: q[1], reading: q[2] };
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function go(panel) {
+  state.page = panel;
+  replanNotice = null;
+  save();
+  render();
+}
+
+document.querySelectorAll('.topnav button[data-panel]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.topnav button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    go(this.dataset.panel);
+  });
+});
+
+document.getElementById('prevWeekTop').addEventListener('click', function() { changeWeek(-1); });
+document.getElementById('nextWeekTop').addEventListener('click', function() { changeWeek(1); });
+
+function changeWeek(n) {
+  state.week = Math.max(1, Math.min(12, state.week + n));
+  save();
+  render();
+}
+
+// ================================================================
+// RENDER
+// ================================================================
+function render() {
+  document.getElementById('topWeekDisplay').textContent = 'Week ' + state.week;
+  const calendarPanel = document.getElementById('panelCalendar');
+  const workPanel = document.getElementById('panelWork');
+
+  if (state.page === 'calendar') {
+    calendarPanel.innerHTML = pageCalendar();
+    calendarPanel.style.display = 'block';
+    workPanel.style.display = 'none';
+    document.querySelectorAll('.topnav button').forEach(b => b.classList.remove('active'));
+    document.querySelector('.topnav button[data-panel="calendar"]').classList.add('active');
+  } else {
+    workPanel.innerHTML = pageWork();
+    workPanel.style.display = 'block';
+    calendarPanel.style.display = 'none';
+    document.querySelectorAll('.topnav button').forEach(b => b.classList.remove('active'));
+    document.querySelector('.topnav button[data-panel="work"]').classList.add('active');
+    bindWorkAutoSave();
+  }
+}
+
+// ================================================================
+// CALENDAR PAGE (原版逻辑)
+// ================================================================
+function pageCalendar() {
+  let weekTasks = state.tasks.filter(t => t.week == state.week);
+  let scheduled = weekTasks.filter(t => t.day != null);
+  let unscheduled = weekTasks.filter(t => t.day == null && !t.done);
+  let done = weekTasks.filter(t => t.done).length;
+  let w = weekData();
+
+  return `
+    <div class="grid g2" style="margin-bottom:16px">
+      <section class="card">
+        <div class="eyebrow">This week</div>
+        <div class="question" style="font-size:16px">${esc(w.q)}</div>
+        ${tag(w.lens)}
+      </section>
+      <section class="card">
+        <div class="row"><h2>Progress</h2><span class="kpi">${done}/${weekTasks.length}</span></div>
+        <div class="progress"><i style="width:${weekTasks.length?done/weekTasks.length*100:0}%"></i></div>
+      </section>
+    </div>
+    ${replanBanner()}
+    <div class="actions" style="margin-bottom:12px">
+      <button class="primary" onclick="autoFillWeek()">Auto-fill schedule</button>
+      <button onclick="availModal()">+ Available block</button>
+      <button onclick="fixedModal()">+ Protected time</button>
+      <button onclick="taskModal()">+ Task</button>
+    </div>
+    <div class="calendar">
+      ${DAYS.map((d,i)=>`
+        <div class="day">
+          <div class="dayhead">${d}</div>
+          ${state.fixed.filter(f=>f.day==i).map(f=>`<div class="block fixed" onclick="fixedModal('${f.id}')"><span>${f.start}–${f.end}<br>${esc(f.title)}</span></div>`).join("")}
+          ${scheduled.filter(t=>t.day==i).sort((a,b)=>toMin(a.start)-toMin(b.start)).map(taskBlockHtml).join("")}
+          ${state.available.filter(a=>a.day==i&&a.week==state.week).map(a=>`<div class="block optional" onclick="availModal('${a.id}')"><span>${a.start}–${a.end}<br>Available</span></div>`).join("")}
+        </div>
+      `).join("")}
+    </div>
+    ${unscheduled.length?`<div class="card" style="margin-top:16px"><h2>Unscheduled this week</h2><div class="list">${unscheduled.map(taskHtml).join("")}</div></div>`:""}
+  `;
+}
+
+function taskBlockHtml(t) {
+  return `<div class="block task${t.done?" done":""}">
+    <span class="chk" onclick="event.stopPropagation();toggleTask('${t.id}')">${t.done?"☑":"☐"}</span>
+    <span onclick="taskModal('${t.id}')"><b>${t.start}–${toTime(toMin(t.start)+t.mins)}</b><br><span class="ttl">${esc(t.title)}</span>${sourceLink(t.bookId)}</span>
+  </div>`;
+}
+
+function taskHtml(t) {
+  return `<div class="item"><div class="row"><div><div class="track">${esc(t.track)}</div><b>${esc(t.title)}</b>${sourceLink(t.bookId)}<div class="muted">${t.mins} min · priority ${t.priority}</div></div><div class="actions"><button onclick="toggleTask('${t.id}')">${t.done?"Undo":"Done"}</button><button onclick="taskModal('${t.id}')">Edit</button></div></div></div>`;
+}
+
+function sourceLink(bookId) {
+  let b = bookId ? state.books.find(x => x.id == bookId) : null;
+  return b && b.url ? ` <a href="${esc(b.url)}" target="_blank" onclick="event.stopPropagation()" title="Open source">↗</a>` : "";
+}
+
+// ================================================================
+// MODAL SYSTEM
+// ================================================================
+function modalShell(title, bodyHtml) {
+  return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-card"><div class="row" style="margin-bottom:14px"><h2 style="margin:0">${esc(title)}</h2><button onclick="closeModal()">×</button></div>${bodyHtml}</div></div>`;
+}
+function showModal(html) { document.getElementById("modalRoot").innerHTML = html; }
+function closeModal() { document.getElementById("modalRoot").innerHTML = ""; }
+
+// ================================================================
+// TASK OPERATIONS
+// ================================================================
+function taskModal(id) {
+  let t = id ? state.tasks.find(x => x.id == id) : { id: null, title: "", track: "THEORY", week: state.week, mins: 60,
+    priority: 3, day: null, start: "19:30", bookId: null };
+  let dayOptions = ["Unscheduled", ...DAYS].map((d,i) => `<option value="${i-1}" ${t.day==(i-1)?"selected":""}>${d}</option>`).join("");
+  let trackOptions = TRACKS.map(tr => `<option ${t.track==tr?"selected":""}>${esc(tr)}</option>`).join("");
+  let bookOptions = `<option value="">— none —</option>` + state.books.map(b => `<option value="${b.id}" ${t.bookId==b.id?"selected":""}>${esc(b.title)}</option>`).join("");
+  showModal(modalShell(id ? "Edit task" : "New task", `<div class="form">
+    <label><b>Title</b><input id="f_title" value="${esc(t.title)}"></label>
+    <label><b>Track</b><select id="f_track">${trackOptions}</select></label>
+    <label><b>Linked source (optional)</b><select id="f_book">${bookOptions}</select></label>
+    <label><b>Week</b><input id="f_week" type="number" min="1" max="12" value="${t.week}"></label>
+    <label><b>Minutes</b><input id="f_mins" type="number" value="${t.mins}"></label>
+    <label><b>Priority (1–5)</b><input id="f_priority" type="number" min="1" max="5" value="${t.priority}"></label>
+    <label><b>Day</b><select id="f_day">${dayOptions}</select></label>
+    <label><b>Start time</b><input id="f_start" type="time" value="${t.start||"19:30"}"></label>
+    <div class="actions" style="margin-top:6px"><button class="primary" onclick="saveTaskModal('${id||""}')">Save</button>${id?`<button class="danger" onclick="deleteTask('${id}')">Delete</button>`:""}<button onclick="closeModal()">Cancel</button></div>
+  </div>`));
+}
+
+function saveTaskModal(id) {
+  let title = document.getElementById("f_title").value.trim();
+  if (!title) { alert("Title required."); return }
+  let track = document.getElementById("f_track").value;
+  let bookId = document.getElementById("f_book").value || null;
+  let week = Math.min(12, Math.max(1, Number(document.getElementById("f_week").value) || state.week));
+  let mins = Math.max(5, Number(document.getElementById("f_mins").value) || 30);
+  let priority = Math.min(5, Math.max(1, Number(document.getElementById("f_priority").value) || 3));
+  let dayVal = Number(document.getElementById("f_day").value);
+  let day = dayVal === -1 ? null : dayVal;
+  let start = document.getElementById("f_start").value || "19:30";
+  if (id) { let t = state.tasks.find(x => x.id == id); Object.assign(t, { title, track, bookId, week, mins, priority, day, start }) }
+  else { state.tasks.push({ id: "t" + Date.now(), title, track, bookId, week, mins, priority, day, start, done: false }) }
+  save(); closeModal(); render();
+}
+
+function deleteTask(id) { state.tasks = state.tasks.filter(x => x.id != id); save(); closeModal(); render(); }
+function toggleTask(id) { let t = state.tasks.find(x => x.id == id); t.done = !t.done; save(); render(); }
+
+// ================================================================
+// AVAILABLE & FIXED
+// ================================================================
+function availModal(id) {
+  let a = id ? state.available.find(x => x.id == id) : { id: null, day: 5, start: "19:30", end: "21:00" };
+  let dayOptions = DAYS.map((d,i) => `<option value="${i}" ${a.day==i?"selected":""}>${d}</option>`).join("");
+  showModal(modalShell(id ? "Edit available block" : "New available block", `<div class="form">
+    <label><b>Day</b><select id="f_day">${dayOptions}</select></label>
+    <label><b>Start</b><input id="f_start" type="time" value="${a.start}"></label>
+    <label><b>End</b><input id="f_end" type="time" value="${a.end}"></label>
+    <p class="muted" style="font-size:11px;margin:0">A new block will automatically try to pick up your highest-priority unscheduled task for this week.</p>
+    <div class="actions" style="margin-top:6px"><button class="primary" onclick="saveAvailModal('${id||""}')">Save</button>${id?`<button class="danger" onclick="deleteAvail('${id}')">Delete</button>`:""}<button onclick="closeModal()">Cancel</button></div>
+  </div>`));
+}
+
+function saveAvailModal(id) {
+  let day = Number(document.getElementById("f_day").value), start = document.getElementById("f_start").value, end = document.getElementById("f_end").value;
+  if (toMin(end) <= toMin(start)) { alert("End time must be after start time."); return }
+  if (id) { let a = state.available.find(x => x.id == id); Object.assign(a, { day, start, end }) } else {
+    let block = { id: "a" + Date.now(), week: state.week, day, start, end };
+    state.available.push(block);
+    let filled = tryFillBlock(block);
+    state.available = state.available.filter(a => toMin(a.end) - toMin(a.start) > 0);
+    if (filled) { let stillPending = state.tasks.filter(t => t.week == state.week && !t.done && t.day == null);
+      replanNotice = { placed: [filled], pendingTitles: stillPending.map(t => t.title) } }
+  }
+  save(); closeModal(); render();
+}
+
+function deleteAvail(id) { state.available = state.available.filter(x => x.id != id); save(); closeModal(); render(); }
+
+function fixedModal(id) {
+  let f = id ? state.fixed.find(x => x.id == id) : { id: null, day: 5, start: "19:30", end: "21:00", title: "" };
+  let dayOptions = DAYS.map((d,i) => `<option value="${i}" ${f.day==i?"selected":""}>${d}</option>`).join("");
+  showModal(modalShell(id ? "Edit protected time" : "New protected time", `<div class="form">
+    <label><b>Title</b><input id="f_title" value="${esc(f.title)}" placeholder="e.g. dinner, gym, family time"></label>
+    <label><b>Day</b><select id="f_day">${dayOptions}</select></label>
+    <label><b>Start</b><input id="f_start" type="time" value="${f.start}"></label>
+    <label><b>End</b><input id="f_end" type="time" value="${f.end}"></label>
+    <div class="actions" style="margin-top:6px"><button class="primary" onclick="saveFixedModal('${id||""}')">Save</button>${id?`<button class="danger" onclick="deleteFixed('${id}')">Delete</button>`:""}<button onclick="closeModal()">Cancel</button></div>
+  </div>`));
+}
+
+function saveFixedModal(id) {
+  let title = document.getElementById("f_title").value.trim() || "Protected time";
+  let day = Number(document.getElementById("f_day").value), start = document.getElementById("f_start").value, end = document.getElementById("f_end").value;
+  if (toMin(end) <= toMin(start)) { alert("End time must be after start time."); return }
+  if (id) { let f = state.fixed.find(x => x.id == id); Object.assign(f, { title, day, start, end }) }
+  else { state.fixed.push({ id: "f" + Date.now(), title, day, start, end }) }
+  save(); closeModal(); render();
+}
+
+function deleteFixed(id) { state.fixed = state.fixed.filter(x => x.id != id); save(); closeModal(); render(); }
+
+// ================================================================
+// AUTO-FILL
+// ================================================================
+function tryFillBlock(block) {
+  let pending = state.tasks.filter(t => t.week == block.week && !t.done && t.day == null).sort((a,b) => b.priority - a.priority);
+  for (let task of pending) {
+    let dur = toMin(block.end) - toMin(block.start);
+    if (dur >= task.mins) { task.day = block.day; task.start = block.start; block.start = toTime(toMin(block.start) + task.mins); return task.title }
+  }
+  return null;
+}
+
+function autoFillWeek() {
+  let changed = true, placed = [];
+  while (changed) {
+    changed = false;
+    let blocks = state.available.filter(a => a.week == state.week).sort((a,b) => a.day - b.day || toMin(a.start) - toMin(b.start));
+    for (let block of blocks) { let title = tryFillBlock(block); if (title) { placed.push(title); changed = true; break } }
+  }
+  state.available = state.available.filter(a => toMin(a.end) - toMin(a.start) > 0);
+  let stillPending = state.tasks.filter(t => t.week == state.week && !t.done && t.day == null);
+  replanNotice = { placed, pendingTitles: stillPending.map(t => t.title) };
+  save(); render();
+}
+
+function dismissNotice() { replanNotice = null; render(); }
+
+function replanBanner() {
+  if (!replanNotice) return "";
+  let lines = [];
+  if (replanNotice.placed.length) lines.push(`Placed ${replanNotice.placed.length}: ${esc(replanNotice.placed.join(", "))}`);
+  if (replanNotice.pendingTitles.length) lines.push(`⚠ Still unscheduled: ${esc(replanNotice.pendingTitles.join(", "))} — add more available time to fit ${replanNotice.pendingTitles.length>1?"them":"it"}.`);
+  if (!replanNotice.placed.length && !replanNotice.pendingTitles.length) lines.push("Nothing to place — everything is scheduled or done.");
+  return `<div class="notice" style="margin-bottom:12px">${lines.map(l=>`<div>${l}</div>`).join("")}<button style="margin-top:8px" onclick="dismissNotice()">Dismiss</button></div>`;
+}
+
+// ================================================================
+// WORK PAGE (包含完整 Library)
+// ================================================================
+function pageWork() {
+  let w = weekData();
+  let current = state.books.find(b => b.status == "In progress");
+  let wr = state.writing[state.week] || { thesis: "", draft: "" };
+  let r = state.reflections.find(x => x.week == state.week) || {};
+  let history = state.airesearch.filter(x => x.week == state.week).slice().reverse();
+  let refs = state.reflections.slice().sort((a,b) => b.week - a.week);
+
+  let html = `
+    <!-- This week -->
+    <section class="card">
+      <div class="eyebrow">This week</div>
+      <div class="question">${esc(w.q)}</div>
+      ${tag(w.lens)}
+      ${current?`<p style="margin-top:10px"><b>Current:</b> ${esc(current.title)} — ${esc(current.author)}${current.url?` <a href="${esc(current.url)}" target="_blank">↗</a>`:""}</p>`:""}
+    </section>
+
+    <!-- Writing -->
+    <section class="card">
+      <div class="row"><h2>Writing</h2><span class="muted" style="font-size:11px">(auto-save)</span></div>
+      <div class="form">
+        <label><b>Thesis</b><textarea id="thesis" placeholder="What do I actually believe?">${esc(wr.thesis)}</textarea></label>
+        <label><b>Draft</b><textarea id="draft" style="min-height:200px" placeholder="Write your argument here...">${esc(wr.draft)}</textarea></label>
+        <div class="actions">
+          <button onclick="challenge()">Challenge my thesis</button>
+          <button onclick="generateResearch()">Generate research directions</button>
+          <span id="saveStatus" class="muted" style="font-size:11px"></span>
+        </div>
+        <div id="challengeBox"></div>
+        <div id="aiResult" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- Reflection -->
+    <section class="card">
+      <div class="row"><h2>Reflection</h2><span class="muted" style="font-size:11px">(auto-save)</span></div>
+      <div class="form">
+        <label>What did I understand?<textarea id="under">${esc(r.under||"")}</textarea></label>
+        <label>What surprised me?<textarea id="surprise">${esc(r.surprise||"")}</textarea></label>
+        <label>What do I disagree with?<textarea id="disagree">${esc(r.disagree||"")}</textarea></label>
+        <label>What changed in my thinking?<textarea id="changed">${esc(r.changed||"")}</textarea></label>
+        <label>What question remains?<textarea id="remain">${esc(r.remain||"")}</textarea></label>
+        <div class="actions">
+          <button onclick="exportReflectionsTxt()">Export all reflections (txt)</button>
+          <button onclick="exportReflectionsDoc()">Export all reflections (doc)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Research History -->
+    <section class="card">
+      <div class="row"><h2>Research History</h2><span class="muted" style="font-size:11px">(auto-save)</span></div>
+      <div class="form">
+        <textarea id="researchInput" placeholder="Record research progress..."></textarea>
+        <div class="actions">
+          <button onclick="exportResearchTxt()">Export all history (txt)</button>
+          <button onclick="exportResearchDoc()">Export all history (doc)</button>
+        </div>
+      </div>
+      <div id="researchList" class="list" style="margin-top:8px">
+        ${state.researchHistory && state.researchHistory.filter(r=>r.week==state.week).slice().reverse().map(r=>`<div class="item"><div class="row"><span>${esc(r.content)}</span><span class="muted" style="font-size:11px">${new Date(r.timestamp).toLocaleString()}</span></div></div>`).join("") || '<span class="muted">No entries</span>'}
+      </div>
+    </section>
+
+    <!-- ========== LIBRARY (完整) ========== -->
+    <section class="card">
+      <div class="row"><h2>Library</h2><button onclick="bookModal()">+ Add resource</button></div>
+      <div class="grid g2">
+        ${state.books.map(b=>`
+          <section class="card" style="padding:12px 14px;margin:0;">
+            <div class="row"><div>${tag(b.track)}</div><span class="pill">${esc(b.status)}</span></div>
+            <h3 style="margin:4px 0">${esc(b.title)}</h3>
+            <div class="muted">${esc(b.author)} · ${esc(b.type)}</div>
+            ${b.why?`<p><b>Why:</b> ${esc(b.why)}</p>`:""}
+            ${b.notes?`<p class="muted">${esc(b.notes)}</p>`:""}
+            <div class="actions">
+              ${b.url?`<a href="${esc(b.url)}" target="_blank">Open source ↗</a>`:""}
+              <button onclick="bookModal('${b.id}')">Edit</button>
+              <button class="danger" onclick="deleteBook('${b.id}')">Delete</button>
+            </div>
+          </section>
+        `).join("")}
+      </div>
+      <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;">
+        <span class="muted">Contemporary sources</span>
+        <div class="grid g2">
+          ${SOURCES.map(s=>`<section class="card" style="padding:10px 14px;margin:0;"><div class="track">${s[2]}</div><h3>${esc(s[0])}</h3><a href="${s[1]}" target="_blank">Open source ↗</a></section>`).join("")}
+        </div>
+      </div>
+      <!-- 12周列表 -->
+      <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;">
+        <span class="muted">The 12 weeks</span>
+        <div class="list">
+          ${WEEKS.map((q,i)=>`
+            <div class="item">
+              <div class="row">
+                <div>${i+1==state.week?'<b>':''}<span class="pill">Week ${i+1}</span> ${esc(q[0])}${i+1==state.week?'</b>':''}</div>
+                ${state.week==i+1?'<span class="pill">current</span>':`<button onclick="jumpWeek(${i+1})">View</button>`}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </section>
+
+    <!-- Saved AI Responses -->
+    <section class="card">
+      <div class="row"><h2>Saved AI Responses</h2></div>
+      <div class="list">
+        ${history.length?history.map(h=>`
+          <div class="item">
+            <div class="muted" style="margin-bottom:4px">“${esc(h.input)}”</div>
+            ${aiResultBlock(h.result)}
+            <div class="actions" style="margin-top:6px"><button class="danger" onclick="deleteAI('${h.id}')">Delete</button></div>
+          </div>
+        `).join(""):"<span class='muted'>Nothing saved yet for this week.</span>"}
+      </div>
+    </section>
+  `;
+  return html;
+}
+
+function jumpWeek(n) {
+  state.week = n;
+  save();
+  render();
+}
+
+function aiResultBlock(r) {
+  const list = arr => `<ul style="margin:4px 0 0 18px;padding:0">${(arr||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  const researchList = arr => `<ul style="margin:4px 0 0 18px;padding:0">${(arr||[]).map(x=>`<li><b>${esc(x.title)}</b> — ${esc(x.note)}</li>`).join("")}</ul>`;
+  return `<div class="grid g2">
+    <div><h3>Related research</h3>${researchList(r.relatedResearch)}</div>
+    <div><h3>Counterarguments</h3>${list(r.counterarguments)}</div>
+    <div><h3>Empirical examples</h3>${list(r.empiricalExamples)}</div>
+    <div><h3>Industry signals</h3>${list(r.industrySignals)}</div>
+  </div>
+  <div style="margin-top:10px"><h3>Possible thesis directions <span class="muted" style="font-weight:400">(you choose)</span></h3>${list(r.possibleTheses)}</div>`;
+}
+
+// ================================================================
+// BOOK OPERATIONS
+// ================================================================
+function bookModal(id) {
+  let b = id ? state.books.find(x => x.id == id) : { id: null, title: "", author: "", type: "Other", track: "THEORY",
+    status: "Planned", week: state.week, why: "", url: "", notes: "" };
+  let trackOptions = TRACKS.map(tr => `<option ${b.track==tr?"selected":""}>${esc(tr)}</option>`).join("");
+  let statusOptions = ["Planned", "In progress", "Done"].map(s => `<option ${b.status==s?"selected":""}>${s}</option>`).join("");
+  showModal(modalShell(id ? "Edit resource" : "New resource", `<div class="form">
+    <label><b>Title</b><input id="f_title" value="${esc(b.title)}"></label>
+    <label><b>Author / source</b><input id="f_author" value="${esc(b.author)}"></label>
+    <label><b>Track</b><select id="f_track">${trackOptions}</select></label>
+    <label><b>Status</b><select id="f_status">${statusOptions}</select></label>
+    <label><b>Week</b><input id="f_week" type="number" min="1" max="12" value="${b.week}"></label>
+    <label><b>Why it matters</b><textarea id="f_why">${esc(b.why)}</textarea></label>
+    <label><b>URL</b><input id="f_url" value="${esc(b.url)}"></label>
+    <label><b>Notes</b><textarea id="f_notes">${esc(b.notes)}</textarea></label>
+    <div class="actions" style="margin-top:6px"><button class="primary" onclick="saveBookModal('${id||""}')">Save</button>${id?`<button class="danger" onclick="deleteBook('${id}')">Delete</button>`:""}<button onclick="closeModal()">Cancel</button></div>
+  </div>`));
+}
+
+function saveBookModal(id) {
+  let title = document.getElementById("f_title").value.trim();
+  if (!title) { alert("Title required."); return }
+  let author = document.getElementById("f_author").value, track = document.getElementById("f_track").value, status = document.getElementById("f_status").value;
+  let week = Math.min(12, Math.max(1, Number(document.getElementById("f_week").value) || state.week));
+  let why = document.getElementById("f_why").value, url = document.getElementById("f_url").value, notes = document.getElementById("f_notes").value;
+  if (id) { let b = state.books.find(x => x.id == id); Object.assign(b, { title, author, track, status, week, why, url, notes }) }
+  else { state.books.push({ id: "b" + Date.now(), title, author, type: "Other", track, status, week, why, url, notes }) }
+  save(); closeModal(); render();
+}
+
+function deleteBook(id) { state.books = state.books.filter(x => x.id != id); save(); closeModal(); render(); }
+
+// ================================================================
+// AI GENERATION (保留原版，但需注意 API 端点可能需要真实 key)
+// ================================================================
+async function generateResearch() {
+  let input = document.getElementById("thesis") ? document.getElementById("thesis").value.trim() : "";
+  if (!input) { alert("Write a thought in the thesis field first."); return }
+  let box = document.getElementById("aiResult");
+  if (!box) return;
+  box.innerHTML = '<div class="muted">Thinking…</div>';
+  let w = weekData();
+  const prompt = `You are the research module inside the user's personal "Intellectual OS", a study system built around this week's question: "${w.q}" (lens: ${w.lens}).
+The user just wrote this reflection or thought:
+"""${input}"""
+Respond ONLY with a valid JSON object, no markdown code fences, no preamble, matching exactly this shape:
+{"relatedResearch":[{"title":"...","note":"..."}],"counterarguments":["..."],"empiricalExamples":["..."],"industrySignals":["..."],"possibleTheses":["..."]}
+Give 3-5 items in relatedResearch, 2-4 in counterarguments and empiricalExamples, 2-3 in industrySignals, 3-4 in possibleTheses. possibleTheses must be phrased as open options, not a recommendation — never tell the user which one to pick.`;
+  try {
+    // 注意：实际使用需要替换为您的 API key，此处为演示保留原样
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    const data = await response.json();
+    let text = (data.content || []).map(c => c.text || "").join("\n").replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(text);
+    lastAIResult = { input, result: parsed };
+    box.innerHTML = aiResultBlock(parsed) + `<div class="actions" style="margin-top:10px"><button class="primary" onclick="saveAI()">Save to this week</button></div>`;
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = '<div class="notice danger">Could not generate research this time — try again in a moment.</div>';
+  }
+}
+
+function saveAI() {
+  if (!lastAIResult) return;
+  state.airesearch.push({ id: "ai" + Date.now(), week: state.week, input: lastAIResult.input, result: lastAIResult.result, ts: Date.now() });
+  lastAIResult = null;
+  save(); render();
+}
+
+function deleteAI(id) { state.airesearch = state.airesearch.filter(x => x.id != id); save(); render(); }
+
+function challenge() {
+  let box = document.getElementById("challengeBox");
+  if (!box) return;
+  let thesis = document.getElementById("thesis") ? document.getElementById("thesis").value : "your thesis";
+  box.innerHTML = `<div class="notice"><b>Challenge mode</b><br>What evidence would falsify "${esc(thesis.slice(0,180))}"? Which alternative explanation is strongest? Which claim is empirical, and which is theoretical? Add one concrete case before finalizing.</div>`;
+}
+
+// ================================================================
+// EXPORT FUNCTIONS
+// ================================================================
+function getAllReflections() {
+  return state.reflections.sort((a,b) => a.week - b.week).map(r =>
+    `Week ${r.week}\nUnderstand: ${r.under||''}\nSurprise: ${r.surprise||''}\nDisagree: ${r.disagree||''}\nChanged: ${r.changed||''}\nRemain: ${r.remain||''}\n---`
+  ).join('\n\n');
+}
+
+function exportReflectionsTxt() {
+  const content = getAllReflections() || 'No reflections yet.';
+  download(content, 'all_reflections.txt', 'text/plain');
+}
+
+function exportReflectionsDoc() {
+  const content = getAllReflections() || 'No reflections yet.';
+  const html = `<html><head><meta charset="utf-8"></head><body><pre style="font-family:inherit;white-space:pre-wrap;">${esc(content)}</pre></body></html>`;
+  download(html, 'all_reflections.doc', 'application/msword');
+}
+
+function getAllResearch() {
+  if (!state.researchHistory) return 'No research history.';
+  return state.researchHistory.sort((a,b) => a.week - b.week || a.timestamp - b.timestamp).map(r =>
+    `Week ${r.week} [${new Date(r.timestamp).toLocaleString()}]\n${r.content}`
+  ).join('\n\n');
+}
+
+function exportResearchTxt() {
+  const content = getAllResearch();
+  download(content, 'all_research_history.txt', 'text/plain');
+}
+
+function exportResearchDoc() {
+  const content = getAllResearch();
+  const html = `<html><head><meta charset="utf-8"></head><body><pre style="font-family:inherit;white-space:pre-wrap;">${esc(content)}</pre></body></html>`;
+  download(html, 'all_research_history.doc', 'application/msword');
+}
+
+function download(content, filename, mime) {
+  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ================================================================
+// WORK AUTO-SAVE BINDING
+// ================================================================
+function bindWorkAutoSave() {
+  const thesis = document.getElementById('thesis');
+  const draft = document.getElementById('draft');
+  if (thesis) {
+    thesis.oninput = function() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        state.writing[state.week] = { thesis: thesis.value, draft: draft ? draft.value : '' };
+        save();
+        let s = document.getElementById('saveStatus');
+        if (s) { s.textContent = 'Saved'; setTimeout(() => { if (s) s.textContent = '' }, 1500); }
+      }, 450);
+    };
+  }
+  if (draft) {
+    draft.oninput = function() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        state.writing[state.week] = { thesis: thesis ? thesis.value : '', draft: draft.value };
+        save();
+        let s = document.getElementById('saveStatus');
+        if (s) { s.textContent = 'Saved'; setTimeout(() => { if (s) s.textContent = '' }, 1500); }
+      }, 450);
+    };
+  }
+  ['under','surprise','disagree','changed','remain'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.oninput = function() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          let obj = { week: state.week };
+          ['under','surprise','disagree','changed','remain'].forEach(k => {
+            obj[k] = document.getElementById(k) ? document.getElementById(k).value : '';
+          });
+          state.reflections = state.reflections.filter(x => x.week != state.week);
+          state.reflections.push(obj);
+          save();
+        }, 450);
+      };
+    }
+  });
+  const researchInput = document.getElementById('researchInput');
+  if (researchInput) {
+    researchInput.oninput = function() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        const val = researchInput.value.trim();
+        if (val) {
+          if (!state.researchHistory) state.researchHistory = [];
+          state.researchHistory.push({ week: state.week, content: val, timestamp: Date.now() });
+          researchInput.value = '';
+          save();
+          render();
+        }
+      }, 700);
+    };
+  }
+}
+
+// ================================================================
+// INIT
+// ================================================================
+render();
+setInterval(save, 30000);
+
+window.addEventListener('beforeunload', function() {
+  const thesis = document.getElementById('thesis');
+  const draft = document.getElementById('draft');
+  if (thesis && draft) {
+    state.writing[state.week] = { thesis: thesis.value, draft: draft.value };
+  }
+  save();
+});
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-backdrop')) closeModal();
+});
+
+console.log('Intellectual OS loaded — full Library included.');
+</script>
+</body>
+</html>
